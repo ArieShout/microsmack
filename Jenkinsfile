@@ -13,15 +13,16 @@ volumes:[
     {
         node ('jenkins-pipeline') {
             println "DEBUG: Pipeline starting"
-        
+
             // grab repo from source control
-            checkout scm
+            //checkout scm
+            git "https://github.com/ArieShout/microsmack.git"
 
             // configuration parameters and variables for pipeline
             // def pwd = pwd()
             def repo = "chzbrgr71"
             def appMajorVersion = "1.1"
-            def acrServer = "briar123.azurecr.io"
+            def acrServer = "menxiaoacrsea.azurecr.io"
             def acrJenkinsCreds = "acr_creds" //this is set in Jenkins global credentials
             sh 'git rev-parse HEAD > git_commit_id.txt'
             try {
@@ -30,6 +31,7 @@ volumes:[
             } catch (e) {
                 error "${e}"
             }
+            env.BRANCH_NAME = "master"
             def buildName = env.JOB_NAME
             def buildNumber = env.BUILD_NUMBER
             def imageTag = env.BRANCH_NAME + '-' + env.GIT_SHA
@@ -75,7 +77,7 @@ volumes:[
                     }
 
                     // build containers
-                    sh "cd smackapi && docker build --build-arg BUILD_DATE='${buildDate}' --build-arg VERSION=${appVersion} --build-arg VCS_REF=${env.GIT_SHA} -t ${apiImage} ."                    
+                    sh "cd smackapi && docker build --build-arg BUILD_DATE='${buildDate}' --build-arg VERSION=${appVersion} --build-arg VCS_REF=${env.GIT_SHA} -t ${apiImage} ."
                     sh "cd smackweb && docker build --build-arg BUILD_DATE='${buildDate}' --build-arg VERSION=${appVersion} --build-arg VCS_REF=${env.GIT_SHA} -t ${webImage} ."
 
                     // push images to repo (ACR)
@@ -101,14 +103,14 @@ volumes:[
                 // https://github.com/Microsoft/kubernetes-cd-plugin
                 // kubernetesDeploy configs: 'kube-jenkins.yaml', credentialsType: 'SSH', dockerCredentials: [[credentialsId: 'acr_creds', url: 'http://briar123.azurecr.io']], kubeConfig: [path: ''], secretName: 'acrregistrykey', ssh: [sshCredentialsId: 'briar-k8s4mgmt', sshServer: 'briar-k8s4mgmt.westus.cloudapp.azure.com'], textCredentials: [certificateAuthorityData: '', clientCertificateData: '', clientKeyData: '', serverUrl: 'https://']
                 // use envvars for plug-in to read yaml file
-                
+
                 kubernetesDeploy(
                     credentialsType: 'SSH',
-                    ssh: [sshCredentialsId: 'briar-k8s4mgmt', sshServer: 'briar-k8s4mgmt.westus.cloudapp.azure.com'],
+                    ssh: [sshCredentialsId: 'menxiao-k8s4mgmt', sshServer: 'menxiao-k8s-menxiao-k8s-685ba0.southeastasia.cloudapp.azure.com'],
                     configs: 'kube-jenkins.yaml',
                     enableConfigSubstitution: true,
                     secretName: 'acrregistrykey',
-                    dockerCredentials: [[credentialsId: 'acr_creds', url: 'http://briar123.azurecr.io']],
+                    dockerCredentials: [[credentialsId: 'acr_creds', url: 'http://menxiaoacrsea.azurecr.io']],
                 )
             }
         }
